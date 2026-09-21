@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Text-to-SQL AI Studio | Live Data Streaming Engine</title>
+    <meta name="description" content="Real-time natural-language database query system with live order streaming, instant SQL generation, and real-time auto-refresh.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --card-bg: rgba(21, 28, 44, 0.85);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            --accent-glow: rgba(79, 172, 254, 0.25);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --code-bg: #090d16;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(0, 242, 254, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(79, 172, 254, 0.08) 0%, transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+
+        header {
+            padding: 1.25rem 2rem;
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .logo-group { display: flex; align-items: center; gap: 0.75rem; }
+        .logo-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: var(--accent-gradient);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; color: #000; box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .logo-title { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
+
+        .header-actions { display: flex; align-items: center; gap: 1rem; }
+        .badge-live {
+            background: rgba(16, 185, 129, 0.15); color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 0.35rem 0.75rem; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .badge-live::before {
+            content: ''; width: 8px; height: 8px; border-radius: 50%;
+            background-color: var(--success-color); box-shadow: 0 0 10px var(--success-color);
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .btn-action-sm {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            color: var(--text-main); padding: 0.4rem 0.85rem; border-radius: 8px;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .btn-action-sm:hover { background: var(--accent-gradient); color: #000; font-weight: 700; }
+
+        .btn-simulate {
+            background: rgba(255, 255, 255, 0.08); border: 1px solid var(--card-border);
+            border-radius: 8px; padding: 0.4rem 0.9rem; color: var(--text-main);
+            font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+        }
+        .btn-simulate:hover { background: rgba(0, 242, 254, 0.2); border-color: #00f2fe; color: #00f2fe; }
+
+        .metrics-container {
+            max-width: 1200px; margin: 1.5rem auto 0 auto; padding: 0 1.5rem; width: 100%;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
+        }
+        @media (max-width: 768px) { .metrics-container { grid-template-columns: 1fr; } }
+
+        .metric-card {
+            background: var(--card-bg); backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border); border-radius: 12px; padding: 1.25rem;
+            display: flex; flex-direction: column; gap: 0.4rem;
+        }
+        .metric-title { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+        .metric-value {
+            font-size: 1.75rem; font-weight: 700;
+            background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .metric-sub { font-size: 0.8rem; color: var(--text-muted); }
+
+        main {
+            max-width: 1200px; margin: 1.5rem auto; padding: 0 1.5rem; width: 100%; flex: 1;
+            display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem;
+        }
+        @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
+        .workspace-card {
+            background: var(--card-bg); backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border); border-radius: 16px; padding: 1.75rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; gap: 1.5rem;
+        }
+
+        .input-header h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .input-header p { color: var(--text-muted); font-size: 0.95rem; }
+
+        .search-box-container { display: flex; gap: 0.75rem; }
+        .search-input {
+            flex: 1; background: #0d1322; border: 1px solid var(--card-border); border-radius: 12px;
+            padding: 1rem 1.25rem; color: var(--text-main); font-family: inherit; font-size: 1rem; transition: all 0.2s ease;
+        }
+        .search-input:focus { outline: none; border-color: #4facfe; box-shadow: 0 0 15px var(--accent-glow); }
+
+        .btn-query {
+            background: var(--accent-gradient); border: none; border-radius: 12px;
+            padding: 0 1.75rem; color: #040914; font-weight: 700; font-size: 1rem; cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .btn-query:hover { transform: translateY(-2px); box-shadow: 0 4px 20px var(--accent-glow); }
+
+        .sample-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .chip {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border);
+            border-radius: 20px; padding: 0.4rem 0.85rem; font-size: 0.85rem; color: var(--text-muted);
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        .chip:hover { background: rgba(79, 172, 254, 0.15); color: #4facfe; border-color: rgba(79, 172, 254, 0.4); }
+
+        .output-section { display: flex; flex-direction: column; gap: 1.25rem; margin-top: 0.5rem; }
+        .sql-box {
+            background: var(--code-bg); border: 1px solid var(--card-border); border-radius: 12px;
+            padding: 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; position: relative; overflow-x: auto;
+        }
+
+        .sql-box-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;
+            font-family: 'Outfit', sans-serif; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        .status-badge { padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+        .status-valid { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .status-invalid { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        .table-wrapper { width: 100%; overflow-x: auto; border-radius: 12px; border: 1px solid var(--card-border); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; }
+        th { background: rgba(255, 255, 255, 0.04); padding: 0.85rem 1rem; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--card-border); }
+        td { padding: 0.85rem 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.03); color: var(--text-main); }
+        tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+        .schema-sidebar {
+            background: var(--card-bg); backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border); border-radius: 16px; padding: 1.5rem;
+            display: flex; flex-direction: column; gap: 1rem; height: fit-content;
+        }
+        .schema-sidebar h3 { font-size: 1.1rem; font-weight: 600; border-bottom: 1px solid var(--card-border); padding-bottom: 0.75rem; }
+        .schema-content { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text-muted); white-space: pre-wrap; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-group">
+            <div class="logo-icon">SQL</div>
+            <div class="logo-title">Text-to-SQL Real-Time AI Studio</div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-action-sm" onclick="exportCSV()">📥 Export CSV</button>
+            <button class="btn-simulate" onclick="triggerLiveTransaction()">+ Simulate Live Transaction</button>
+            <div class="badge-live">Real-Time Stream Active</div>
+        </div>
+    </header>
+
+    <div class="metrics-container">
+        <div class="metric-card">
+            <div class="metric-title">Live Total Revenue</div>
+            <div id="metricRevenue" class="metric-value">$6,159.87</div>
+            <div class="metric-sub">Auto-updating from live stream</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">Total Orders Count</div>
+            <div id="metricOrders" class="metric-value">13</div>
+            <div class="metric-sub">Completed transactions</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">Latest Transaction</div>
+            <div id="metricLatest" class="metric-value" style="font-size: 1.25rem;">Live Stream Active</div>
+            <div id="metricTimestamp" class="metric-sub">Listening for events...</div>
+        </div>
+    </div>
+
+    <main>
+        <div class="workspace-card">
+            <div class="input-header">
+                <h2>Real-Time Natural Language Database Interface</h2>
+                <p>Query live SQLite database stream in plain English. Results automatically reflect real-time incoming transactions.</p>
+            </div>
+
+            <div class="search-box-container">
+                <input type="text" id="questionInput" class="search-input" placeholder="e.g. What is the total revenue from completed orders?" value="What is the total revenue from completed orders?">
+                <button id="queryBtn" class="btn-query" onclick="runQuery()">Run Query</button>
+            </div>
+
+            <div>
+                <span style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; display: block;">Sample Real-Time Queries:</span>
+                <div class="sample-chips">
+                    <div class="chip" onclick="setQuestion('What is the total revenue from completed orders?')">Total Live Revenue</div>
+                    <div class="chip" onclick="setQuestion('Show all customers located in USA')">USA Customers</div>
+                    <div class="chip" onclick="setQuestion('List top 5 products sorted by price descending')">Top Expensive Products</div>
+                    <div class="chip" onclick="setQuestion('How many orders has each customer placed?')">Customer Order Counts</div>
+                </div>
+            </div>
+
+            <div id="outputSection" class="output-section">
+                <div class="sql-box">
+                    <div class="sql-box-header">
+                        <span>Generated SQL Query</span>
+                        <span id="statusBadge" class="status-badge status-valid">READ-ONLY VALIDATED</span>
+                    </div>
+                    <code id="sqlCode" style="color: #60a5fa;">SELECT SUM(total_amount) AS total_revenue FROM orders WHERE status = 'Completed';</code>
+                </div>
+
+                <div id="resultSummary" style="font-weight: 500; font-size: 0.95rem; color: var(--text-muted);">
+                    Query executed successfully returning 1 row(s).
+                </div>
+
+                <div class="table-wrapper">
+                    <table id="resultsTable">
+                        <thead id="tableHead">
+                            <tr><th>total_revenue</th></tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr><td>6159.87</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="schema-sidebar">
+            <h3>Database Schema</h3>
+            <div id="schemaBox" class="schema-content">Loading database schema...</div>
+        </div>
+    </main>
+
+    <script>
+        async function fetchSchema() {
+            try {
+                const res = await fetch('/api/schema');
+                const data = await res.json();
+                document.getElementById('schemaBox').textContent = data.schema;
+            } catch (err) {
+                document.getElementById('schemaBox').textContent = 'Error loading schema.';
+            }
+        }
+
+        async function fetchRealtimeStats() {
+            try {
+                const res = await fetch('/api/realtime-stats');
+                const data = await res.json();
+                
+                document.getElementById('metricRevenue').textContent = '$' + data.live_revenue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('metricOrders').textContent = data.total_orders;
+                
+                if (data.latest_order) {
+                    document.getElementById('metricLatest').textContent = 'Order #' + data.latest_order.order_id + ' ($' + data.latest_order.amount + ')';
+                    document.getElementById('metricTimestamp').textContent = 'Time: ' + data.latest_order.timestamp;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function triggerLiveTransaction() {
+            try {
+                const res = await fetch('/api/simulate-live-order', { method: 'POST' });
+                const data = await res.json();
+                await fetchRealtimeStats();
+                await runQuery();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function setQuestion(q) {
+            document.getElementById('questionInput').value = q;
+            runQuery();
+        }
+
+        async function runQuery() {
+            const question = document.getElementById('questionInput').value.trim();
+            if (!question) return;
+
+            try {
+                const res = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+                const data = await res.json();
+
+                document.getElementById('sqlCode').textContent = data.generated_sql || 'N/A';
+                
+                const badge = document.getElementById('statusBadge');
+                if (data.is_valid) {
+                    badge.textContent = 'READ-ONLY VALIDATED';
+                    badge.className = 'status-badge status-valid';
+                    document.getElementById('resultSummary').textContent = data.explanation || 'Query executed successfully.';
+                } else {
+                    badge.textContent = 'VALIDATION FAILED';
+                    badge.className = 'status-badge status-invalid';
+                    document.getElementById('resultSummary').textContent = data.error || 'Invalid SQL.';
+                }
+
+                // Render table
+                const head = document.getElementById('tableHead');
+                const body = document.getElementById('tableBody');
+                head.innerHTML = '';
+                body.innerHTML = '';
+
+                if (data.columns && data.columns.length > 0) {
+                    const tr = document.createElement('tr');
+                    data.columns.forEach(col => {
+                        const th = document.createElement('th');
+                        th.textContent = col;
+                        tr.appendChild(th);
+                    });
+                    head.appendChild(tr);
+                }
+
+                if (data.rows && data.rows.length > 0) {
+                    data.rows.forEach(row => {
+                        const tr = document.createElement('tr');
+                        row.forEach(val => {
+                            const td = document.createElement('td');
+                            td.textContent = (typeof val === 'number') ? val.toLocaleString() : val;
+                            tr.appendChild(td);
+                        });
+                        body.appendChild(tr);
+                    });
+                } else {
+                    body.innerHTML = '<tr><td colspan="10" style="text-align:center; color:var(--text-muted);">No records found.</td></tr>';
+                }
+
+            } catch (err) {
+                document.getElementById('resultSummary').textContent = 'API execution error: ' + err.message;
+            }
+        }
+
+        function exportCSV() {
+            const table = document.getElementById('resultsTable');
+            let csv = [];
+            for (let row of table.rows) {
+                let cols = Array.from(row.cells).map(c => `"${c.textContent.replace(/"/g, '""')}"`);
+                csv.push(cols.join(","));
+            }
+            if (csv.length === 0) return;
+            const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "query_results.csv";
+            a.click();
+        }
+
+        fetchSchema();
+        fetchRealtimeStats();
+        runQuery();
+
+        // Real-time auto-refresh interval (every 3 seconds)
+        setInterval(() => {
+            fetchRealtimeStats();
+            runQuery();
+        }, 3000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policy Compliance AI Studio | Deterministic Rules + LLM Explanation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --card-bg: rgba(21, 28, 44, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-gradient: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Outfit', sans-serif; background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; }
+
+        header { padding: 1.25rem 2rem; background: rgba(11, 15, 25, 0.85); border-bottom: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; }
+        .logo-group { display: flex; align-items: center; gap: 0.75rem; }
+        .logo-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--accent-gradient); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; }
+        .badge-model { background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3); padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+
+        main { max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+        .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        input, select { background: #050811; border: 1px solid var(--card-border); border-radius: 8px; padding: 0.75rem; color: var(--text-main); font-family: inherit; font-size: 0.95rem; }
+        .btn-audit { background: var(--accent-gradient); border: none; border-radius: 10px; padding: 0.85rem; color: #fff; font-weight: 700; cursor: pointer; grid-column: span 2; }
+
+        .result-box { background: #050811; border: 1px solid var(--card-border); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .status-tag { padding: 0.3rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700; display: inline-block; width: fit-content; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-group">
+            <div class="logo-icon">AUDIT</div>
+            <div style="font-size: 1.25rem; font-weight: 700;">Policy Compliance AI Studio</div>
+        </div>
+        <div class="badge-model">Gemini 2.5 Flash Policy Auditor Active</div>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2>Expense Claim Policy Audit & Explanation</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Evaluates claim parameters against corporate policy rules and generates audit explanations via Gemini 2.5 Flash.</p>
+
+            <div class="form-grid">
+                <input type="text" id="claimId" value="CLM-992" placeholder="Claim ID">
+                <input type="number" id="amount" value="1250.00" placeholder="Amount ($)">
+                <select id="category">
+                    <option value="Travel">Travel</option>
+                    <option value="Meals">Meals</option>
+                    <option value="Software">Software</option>
+                    <option value="Office Supplies">Office Supplies</option>
+                    <option value="Personal">Personal / Restricted</option>
+                </select>
+                <input type="text" id="merchant" value="Delta Airlines" placeholder="Merchant">
+                <select id="hasReceipt" style="grid-column: span 2;">
+                    <option value="true">Receipt Attached: YES</option>
+                    <option value="false">Receipt Attached: NO</option>
+                </select>
+                <button class="btn-audit" onclick="runAudit()">Audit Claim with Gemini 2.5</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Audit Determination & Gemini Explanation</h3>
+            <div class="result-box">
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">Compliance Status:</span>
+                    <div id="statusBadge" class="status-tag" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">NON_COMPLIANT</div>
+                </div>
+                <div style="font-size: 0.95rem; color: #fff; line-height: 1.5;" id="explanationText">Click Audit Claim to run compliance evaluation...</div>
+                <div id="violationsBox" style="color: #f87171; font-size: 0.85rem; line-height: 1.5;"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        async function runAudit() {
+            const claim_id = document.getElementById('claimId').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const merchant = document.getElementById('merchant').value;
+            const has_receipt = document.getElementById('hasReceipt').value === 'true';
+
+            try {
+                const res = await fetch('/api/audit-claim', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ claim_id, amount, category, merchant, has_receipt })
+                });
+                const data = await res.json();
+
+                const badge = document.getElementById('statusBadge');
+                badge.textContent = data.status;
+                if (data.status === 'COMPLIANT') {
+                    badge.style.background = 'rgba(16, 185, 129, 0.2)'; badge.style.color = '#34d399';
+                } else if (data.status === 'WARNING') {
+                    badge.style.background = 'rgba(245, 158, 11, 0.2)'; badge.style.color = '#fbbf24';
+                } else {
+                    badge.style.background = 'rgba(239, 68, 68, 0.2)'; badge.style.color = '#f87171';
+                }
+
+                document.getElementById('explanationText').textContent = data.explanation;
+                
+                let vText = '';
+                if (data.violations.length > 0) vText += 'Violations:\n- ' + data.violations.join('\n- ');
+                if (data.warnings.length > 0) vText += '\nWarnings:\n- ' + data.warnings.join('\n- ');
+                document.getElementById('violationsBox').textContent = vText;
+
+            } catch (err) {
+                alert('Audit error: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

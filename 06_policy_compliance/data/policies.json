@@ -1,0 +1,12 @@
+{
+    "expense_policy": {
+        "max_single_transaction": 1000.00,
+        "receipt_required_above": 50.00,
+        "allowed_categories": ["Travel", "Meals", "Software", "Office Supplies"],
+        "restricted_merchants": ["Casino", "Liquor Store", "Luxury Retail"]
+    },
+    "data_privacy_policy": {
+        "pii_fields": ["ssn", "credit_card", "passport_number"],
+        "retention_days": 365
+    }
+}
